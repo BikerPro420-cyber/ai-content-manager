@@ -776,7 +776,7 @@
         showProgress(10, 'Seleccionando sonido de fondo...');
 
         // Usar la función REAL de video
-        const response = await fetch('/.netlify/functions/create-video-real', {
+        const response = await fetch('/.netlify/functions/generate-video', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(videoData)
@@ -1229,5 +1229,6 @@
     });
 </script>
 </html>
+
 
 
