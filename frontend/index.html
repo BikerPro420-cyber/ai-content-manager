@@ -1,0 +1,1233 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Video Machine v7.7 - Narración Humana Avanzada</title>
+    <style>
+        :root {
+            --bg-color: #1a1a1a;
+            --primary-color: #2a2a2a;
+            --secondary-color: #3c3c3c;
+            --font-color: #e0e0e0;
+            --accent-color: #007bff;
+            --danger-color: #dc3545;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --money-color: #ffd700;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--font-color);
+            margin: 0;
+            padding: 2em;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2em;
+            background-color: var(--primary-color);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,.4);
+        }
+        
+        .humanization-badge {
+            background: linear-gradient(45deg, #ff6b6b, #ffa500);
+            color: white;
+            padding: 0.5em 1em;
+            border-radius: 20px;
+            font-weight: bold;
+            display: inline-block;
+            margin-bottom: 1em;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .grid-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5em;
+        }
+        
+        .full-width {
+            grid-column: 1 / -1;
+        }
+        
+        .control-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        label {
+            margin-bottom: .5em;
+            font-weight: 700;
+            font-size: .9em;
+            color: #b0b0b0;
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: .8em;
+            background-color: var(--secondary-color);
+            border: 1px solid #555;
+            border-radius: 4px;
+            color: var(--font-color);
+            box-sizing: border-box;
+            font-size: 1em;
+        }
+        
+        textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+        
+        button {
+            padding: .8em 1.5em;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 700;
+            transition: all 0.3s ease;
+            font-size: 1em;
+            color: #fff;
+            margin: 0.2em;
+        }
+        
+        .btn-primary { background: linear-gradient(45deg, #0066ff, #3399ff); }
+        .btn-secondary { background: linear-gradient(45deg, #28a745, #55c057); }
+        .btn-danger { background: linear-gradient(45deg, #dc3545, #e85a6f); }
+        .btn-warning { background: linear-gradient(45deg, #ffc107, #ffca2c); color: #000; }
+        .btn-money { background: linear-gradient(45deg, #ffd700, #ffed4e); color: #000; }
+        
+        button:hover:not(:disabled) {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        
+        button:disabled {
+            background: #555 !important;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+        
+        .humanization-features {
+            background: linear-gradient(45deg, #1e3c72, #2a5298);
+            padding: 1.5em;
+            border-radius: 8px;
+            margin: 1em 0;
+            border-left: 4px solid #ffd700;
+        }
+        
+        .feature-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1em;
+            margin-top: 1em;
+        }
+        
+        .feature-item {
+            background: rgba(255,255,255,0.1);
+            padding: 1em;
+            border-radius: 6px;
+            text-align: center;
+        }
+        
+        .duration-info {
+            background: var(--secondary-color);
+            padding: 1em;
+            border-radius: 8px;
+            margin: 1em 0;
+            text-align: center;
+            border-left: 4px solid var(--accent-color);
+        }
+        
+        .video-history-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 1em;
+            margin-top: 1em;
+        }
+        
+        .video-card {
+            background: var(--secondary-color);
+            border-radius: 8px;
+            padding: 1.2em;
+            border-left: 4px solid var(--accent-color);
+            transition: transform 0.2s ease;
+        }
+        
+        .video-card:hover {
+            transform: translateY(-2px);
+        }
+        
+        .video-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5em;
+            margin-top: 0.8em;
+            font-size: 0.85em;
+        }
+        
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.4em;
+            background: rgba(255,255,255,0.05);
+            border-radius: 4px;
+        }
+        
+        .money { color: var(--money-color); font-weight: bold; }
+        .views { color: var(--accent-color); }
+        .duration { color: var(--success-color); }
+        
+        .earnings-summary {
+            background: linear-gradient(45deg, #1e3c72, #2a5298);
+            padding: 1.5em;
+            border-radius: 8px;
+            margin: 1em 0;
+            text-align: center;
+        }
+        
+        .google-sheets-section {
+            background: var(--secondary-color);
+            padding: 1.5em;
+            border-radius: 8px;
+            margin: 1em 0;
+            border-left: 4px solid var(--success-color);
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 0.5em;
+            margin-top: 1em;
+            flex-wrap: wrap;
+        }
+        
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.3em 0.8em;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: 700;
+            margin-left: 0.5em;
+        }
+        
+        .status-ok { background: var(--success-color); color: white; }
+        .status-fail { background: var(--danger-color); color: white; }
+        .status-unknown { background: #6c757d; color: white; }
+        
+        .progress-container {
+            margin-top: 10px;
+            display: none;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background-color: var(--secondary-color);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(45deg, #0066ff, #3399ff);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        
+        .progress-text {
+            text-align: center;
+            margin-top: 5px;
+            font-size: 0.9em;
+            color: #b0b0b0;
+        }
+        
+        .script-preview {
+            background: var(--secondary-color);
+            padding: 1em;
+            border-radius: 6px;
+            margin-top: 1em;
+            max-height: 200px;
+            overflow-y: auto;
+            font-size: 0.9em;
+            border-left: 4px solid var(--warning-color);
+        }
+        
+        .vocal-direction {
+            color: #ffa500;
+            font-style: italic;
+        }
+        
+        .auto-title-preview {
+            display: none;
+            margin-top: 1em;
+            padding: 1em;
+            background: rgba(255,215,0,0.1);
+            border-radius: 6px;
+            border-left: 4px solid #ffd700;
+        }
+        
+        .narration-preview {
+            background: var(--secondary-color);
+            padding: 1em;
+            border-radius: 6px;
+            margin-top: 1em;
+            max-height: 150px;
+            overflow-y: auto;
+            font-size: 0.85em;
+            border-left: 4px solid var(--accent-color);
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎬 Video Machine v7.7 <span class="humanization-badge">HUMANIZACIÓN 3x ACTIVADA</span></h1>
+        
+        <!-- Humanization Features -->
+        <div class="humanization-features full-width">
+            <h2>🎭 NUEVO: Humanización 3x Activada</h2>
+            <div class="feature-list">
+                <div class="feature-item">
+                    <h3>🎤 Títulos Automáticos</h3>
+                    <p>IA genera títulos creativos y atractivos</p>
+                </div>
+                <div class="feature-item">
+                    <h3>💬 Estilo Conversacional</h3>
+                    <p>Lenguaje natural como contar a un amigo</p>
+                </div>
+                <div class="feature-item">
+                    <h3>🎭 Actuación Vocal</h3>
+                    <p>Suspiros, pausas dramáticas, cambios de tono</p>
+                </div>
+                <div class="feature-item">
+                    <h3>🌍 Multilenguaje Natural</h3>
+                    <p>Español e inglés con expresiones reales</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Duration Info -->
+        <div class="duration-info full-width">
+            <h2>⏱️ Configuración de Duración</h2>
+            <p><strong>2500 palabras = 15 minutos</strong> | <strong>3000 palabras = 20 minutos</strong></p>
+            <p><em>Fórmula: 150-200 palabras por minuto de narración</em></p>
+        </div>
+
+        <!-- Earnings Summary -->
+        <div class="earnings-summary full-width">
+            <h2>💰 Resumen de Ingresos</h2>
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1em; margin-top: 1em;">
+                <div>
+                    <h3>Total Ganado</h3>
+                    <p style="font-size: 2em; color: var(--money-color);" id="totalEarnings">.00</p>
+                </div>
+                <div>
+                    <h3>Videos Creados</h3>
+                    <p style="font-size: 2em; color: var(--success-color);" id="totalVideos">0</p>
+                </div>
+                <div>
+                    <h3>Vistas Totales</h3>
+                    <p style="font-size: 2em; color: var(--accent-color);" id="totalViews">0</p>
+                </div>
+                <div>
+                    <h3>Duración Promedio</h3>
+                    <p style="font-size: 2em; color: var(--warning-color);" id="averageDuration">0 min</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid-container">
+            <!-- Video Title Input with Auto-Generation -->
+            <div class="control-group full-width">
+                <label for="videoTitle">🎬 Título del Video <small>(IA genera automáticamente)</small></label>
+                <input type="text" id="videoTitle" placeholder="Ej: El Misterio del Faro Abandonado - Historia de Terror Completa"/>
+                <div class="button-group">
+                    <button id="generateTitleBtn" class="btn-warning">✨ Generar Título con IA</button>
+                    <small style="color: #b0b0b0;">Deja vacío para generar automáticamente basado en la historia</small>
+                </div>
+                <div id="autoTitlePreview" class="auto-title-preview">
+                    <strong>🎯 Título sugerido:</strong> <span id="suggestedTitle"></span>
+                    <button id="useSuggestedTitle" class="btn-secondary" style="margin-left: 1em;">Usar este título</button>
+                </div>
+            </div>
+
+            <!-- API Keys -->
+            <div class="control-group">
+                <label for="apiKey">🔑 OpenRouter API Key</label>
+                <input type="password" id="apiKey" placeholder="sk-or-..."/>
+                <span id="apiStatus" class="status-pill status-unknown">No Validada</span>
+            </div>
+            
+            <div class="control-group">
+                <label for="replicateKey">🖼️ Replicate API Key</label>
+                <input type="password" id="replicateKey" placeholder="r8_..."/>
+                <span id="replicateStatus" class="status-pill status-unknown">No Validada</span>
+            </div>
+
+            <!-- Google Sheets Configuration -->
+            <div class="google-sheets-section full-width">
+                <h3>📊 Google Sheets Integration</h3>
+                <div class="grid-container">
+                    <div class="control-group">
+                        <label for="googleClientId">Google Client ID</label>
+                        <input type="text" id="googleClientId" placeholder="123456789-abcdefg.apps.googleusercontent.com"/>
+                    </div>
+                    <div class="control-group">
+                        <label for="googleSheetsId">Google Sheets ID</label>
+                        <input type="text" id="googleSheetsId" placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms"/>
+                    </div>
+                    <div class="control-group">
+                        <label for="sheetName">Nombre de la Hoja</label>
+                        <input type="text" id="sheetName" value="VideoHistory" placeholder="VideoHistory"/>
+                    </div>
+                </div>
+                <div class="button-group">
+                    <button id="connectSheetsBtn" class="btn-secondary">🔗 Conectar Google Sheets</button>
+                    <button id="updateAnalyticsBtn" class="btn-money">📈 Actualizar Estadísticas</button>
+                    <span id="sheetsStatus" class="status-pill status-unknown">No Conectado</span>
+                </div>
+            </div>
+
+            <!-- Genre and Language -->
+            <div class="control-group">
+                <label for="genre">🎭 Género</label>
+                <select id="genre">
+                    <option value="Horror Psicológico">Horror Psicológico</option>
+                    <option value="Crimen Real">Crimen Real</option>
+                    <option value="Misterios">Misterios</option>
+                    <option value="Suspenso">Suspenso</option>
+                    <option value="Paranormal">Paranormal</option>
+                </select>
+            </div>
+            
+            <div class="control-group">
+                <label for="language">🌐 Idioma</label>
+                <select id="language">
+                    <option value="Español">Español</option>
+                    <option value="Inglés">Inglés</option>
+                </select>
+            </div>
+
+            <!-- Word Count - UPDATED RANGE -->
+            <div class="control-group full-width">
+                <label for="wordCount">
+                    📝 Palabras: <span id="wordCountValue">2500</span> | 
+                    ⏱️ Duración: <span id="durationEstimate">15 minutos</span>
+                </label>
+                <input type="range" id="wordCount" min="2000" max="3500" value="2500" step="100"/>
+                <div style="display: flex; justify-content: space-between; font-size: 0.8em; color: #b0b0b0;">
+                    <span>2000 (13 min)</span>
+                    <span>2500 (15 min)</span>
+                    <span>3000 (20 min)</span>
+                    <span>3500 (23 min)</span>
+                </div>
+            </div>
+
+            <!-- Voice Selection -->
+            <div class="control-group full-width">
+                <label for="ttsVoice">🎤 Voz para Narración <small>(Con humanización 3x)</small></label>
+                <select id="ttsVoice">
+                    <option value="female_01">Voz Femenina 1 (Español - Conversacional)</option>
+                    <option value="male_01">Voz Masculina 1 (Español - Dramática)</option>
+                    <option value="female_02">Voz Femenina 2 (Inglés - Natural)</option>
+                    <option value="male_02">Voz Masculina 2 (Inglés - Profunda)</option>
+                </select>
+                <div id="narrationPreview" class="narration-preview">
+                    <strong>🎭 Vista previa de narración:</strong>
+                    <div id="narrationText"></div>
+                </div>
+            </div>
+
+            <!-- Story Idea -->
+            <div class="control-group full-width">
+                <label for="idea">💡 Idea de la Historia (15-20 minutos)</label>
+                <textarea id="idea" placeholder="Ej: Un farero solitario en una isla remota descubre que las criaturas en la niebla no son naturales..."></textarea>
+                <div class="button-group">
+                    <button id="generateIdeaBtn" class="btn-primary">✨ Generar Idea + Título Auto</button>
+                    <button id="generateScriptBtn" class="btn-primary">📜 Generar Guion con Humanización</button>
+                </div>
+            </div>
+
+            <!-- Image Section -->
+            <div class="control-group full-width">
+                <label for="storyImage">🖼️ Imagen para el Video</label>
+                <div class="button-group">
+                    <input type="file" id="imageUpload" style="display: none;" accept="image/*"/>
+                    <button type="button" id="uploadImageBtn" class="btn-secondary">📁 Subir Imagen</button>
+                    <button type="button" id="generateImageBtn" class="btn-primary">🎨 Generar Imagen IA</button>
+                    <button type="button" id="removeImageBtn" class="btn-danger" style="display: none;">🗑️ Eliminar</button>
+                </div>
+                <div id="imagePreviewContainer" style="display: none; margin-top: 1em; text-align: center;">
+                    <img id="previewImg" style="max-width: 300px; max-height: 200px; border-radius: 8px; border: 2px solid var(--accent-color);"/>
+                </div>
+            </div>
+
+            <!-- Script Output -->
+            <div class="control-group full-width">
+                <label for="scriptOutput">📄 Guion Generado (<span id="actualWordCount">0</span> palabras) <small>Con humanización 3x</small></label>
+                <textarea id="scriptOutput" readonly placeholder="El guion completo de 2500-3000 palabras con narración humana aparecerá aquí..." style="min-height: 200px;"></textarea>
+                
+                <!-- Script Preview -->
+                <div id="scriptPreview" class="script-preview" style="display: none;">
+                    <strong>🎭 Vista previa de humanización:</strong>
+                    <div id="previewContent"></div>
+                </div>
+                
+                <div class="button-group">
+                    <button id="downloadBtn" class="btn-secondary" disabled>💾 Descargar Guion</button>
+                    <button id="createVideoBtn" class="btn-danger" disabled>🎬 Crear Video (15-20min)</button>
+                </div>
+                
+                <!-- Progress Bar -->
+                <div id="videoProgress" class="progress-container">
+                    <div class="progress-bar">
+                        <div class="progress-fill"></div>
+                    </div>
+                    <div class="progress-text">Procesando...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Video History -->
+        <div class="full-width" style="margin-top: 2em;">
+            <h2>📺 Historial de Videos (15-20 minutos)</h2>
+            <div class="button-group">
+                <button id="refreshHistoryBtn" class="btn-secondary">🔄 Actualizar Historial</button>
+                <button id="syncAllAnalyticsBtn" class="btn-money">📊 Sincronizar Todas las Stats</button>
+                <button id="clearHistoryBtn" class="btn-danger">🗑️ Limpiar Historial</button>
+            </div>
+            
+            <div id="videoHistoryGrid" class="video-history-grid">
+                <div style="text-align: center; padding: 3em; color: #888;">
+                    <p>🎬 Tus videos de 15-20 minutos aparecerán aquí</p>
+                    <p><small>Cada video incluirá: Título, Duración, Vistas, Ingresos y Fechas</small></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // ========== VIDEO MACHINE v7.7 - HUMANIZACIÓN 3x ==========
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('🎬 Video Machine v7.7 - Humanización 3x Activada - Inicializando...');
+        
+        // ========== ELEMENTOS PRINCIPALES ==========
+        const elements = {
+            // Controles básicos
+            wordCount: document.getElementById('wordCount'),
+            wordCountValue: document.getElementById('wordCountValue'),
+            durationEstimate: document.getElementById('durationEstimate'),
+            actualWordCount: document.getElementById('actualWordCount'),
+            videoTitle: document.getElementById('videoTitle'),
+            generateTitleBtn: document.getElementById('generateTitleBtn'),
+            autoTitlePreview: document.getElementById('autoTitlePreview'),
+            suggestedTitle: document.getElementById('suggestedTitle'),
+            useSuggestedTitle: document.getElementById('useSuggestedTitle'),
+            
+            // API Keys
+            apiKey: document.getElementById('apiKey'),
+            replicateKey: document.getElementById('replicateKey'),
+            apiStatus: document.getElementById('apiStatus'),
+            replicateStatus: document.getElementById('replicateStatus'),
+            
+            // Contenido
+            genre: document.getElementById('genre'),
+            language: document.getElementById('language'),
+            idea: document.getElementById('idea'),
+            scriptOutput: document.getElementById('scriptOutput'),
+            ttsVoice: document.getElementById('ttsVoice'),
+            scriptPreview: document.getElementById('scriptPreview'),
+            previewContent: document.getElementById('previewContent'),
+            narrationPreview: document.getElementById('narrationPreview'),
+            narrationText: document.getElementById('narrationText'),
+            
+            // Botones principales
+            createVideoBtn: document.getElementById('createVideoBtn'),
+            generateIdeaBtn: document.getElementById('generateIdeaBtn'),
+            generateScriptBtn: document.getElementById('generateScriptBtn'),
+            downloadBtn: document.getElementById('downloadBtn'),
+            
+            // Imágenes
+            imageUpload: document.getElementById('imageUpload'),
+            uploadImageBtn: document.getElementById('uploadImageBtn'),
+            generateImageBtn: document.getElementById('generateImageBtn'),
+            removeImageBtn: document.getElementById('removeImageBtn'),
+            previewImg: document.getElementById('previewImg'),
+            imagePreviewContainer: document.getElementById('imagePreviewContainer'),
+            
+            // Progreso
+            videoProgress: document.getElementById('videoProgress'),
+            progressFill: document.querySelector('.progress-fill'),
+            progressText: document.querySelector('.progress-text'),
+            
+            // Google Sheets
+            connectSheetsBtn: document.getElementById('connectSheetsBtn'),
+            updateAnalyticsBtn: document.getElementById('updateAnalyticsBtn'),
+            sheetsStatus: document.getElementById('sheetsStatus'),
+            
+            // Historial
+            refreshHistoryBtn: document.getElementById('refreshHistoryBtn'),
+            syncAllAnalyticsBtn: document.getElementById('syncAllAnalyticsBtn'),
+            clearHistoryBtn: document.getElementById('clearHistoryBtn'),
+            videoHistoryGrid: document.getElementById('videoHistoryGrid')
+        };
+
+        // ========== ESTADO DE LA APLICACIÓN ==========
+        const state = {
+            selectedImage: null,
+            selectedImageType: null,
+            videoHistory: [],
+            googleAuthenticated: false,
+            gapiLoaded: false,
+            humanizationEnabled: true
+        };
+
+        // ========== CONFIGURACIÓN DE DURACIÓN ==========
+        function updateDurationEstimate() {
+            const words = parseInt(elements.wordCount.value);
+            const minutes = Math.round(words / 150);
+            elements.wordCountValue.textContent = words.toLocaleString();
+            elements.durationEstimate.textContent = minutes + ' minutos';
+        }
+
+        elements.wordCount.addEventListener('input', updateDurationEstimate);
+        updateDurationEstimate();
+
+        // ========== GENERACIÓN DE TÍTULOS AUTOMÁTICOS ==========
+        elements.generateTitleBtn.addEventListener('click', generateAutoTitle);
+        elements.useSuggestedTitle.addEventListener('click', useSuggestedTitle);
+
+        async function generateAutoTitle() {
+            if (!elements.apiKey.value.trim()) {
+                alert('❌ Introduce tu OpenRouter API Key');
+                return;
+            }
+
+            const idea = elements.idea.value.trim();
+            if (!idea) {
+                alert('❌ Escribe una idea primero o genera una idea automática');
+                return;
+            }
+
+            setButtonsDisabled(true);
+            elements.generateTitleBtn.textContent = '🔄 Generando título...';
+
+            try {
+                const response = await fetch('/.netlify/functions/generate-idea', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        apiKey: elements.apiKey.value.trim(),
+                        genre: elements.genre.value,
+                        language: elements.language.value,
+                        generateTitleOnly: true,
+                        idea: idea
+                    })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Error generando título');
+                }
+                
+                const result = await response.json();
+                
+                // Mostrar título sugerido
+                elements.suggestedTitle.textContent = result.title || result.idea;
+                elements.autoTitlePreview.style.display = 'block';
+                
+                console.log('✅ Título automático generado:', result.title);
+
+            } catch (error) {
+                alert('❌ Error al generar título: ' + error.message);
+            } finally {
+                elements.generateTitleBtn.textContent = '✨ Generar Título con IA';
+                setButtonsDisabled(false);
+            }
+        }
+
+        function useSuggestedTitle() {
+            const title = elements.suggestedTitle.textContent;
+            elements.videoTitle.value = title;
+            elements.autoTitlePreview.style.display = 'none';
+            alert('✅ Título aplicado: ' + title);
+        }
+
+        // ========== MANEJO DE IMÁGENES ==========
+        elements.uploadImageBtn.addEventListener('click', () => {
+            elements.imageUpload.click();
+        });
+
+        elements.imageUpload.addEventListener('change', handleImageUpload);
+        elements.removeImageBtn.addEventListener('click', removeImage);
+        elements.generateImageBtn.addEventListener('click', generateImageWithAI);
+
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (file && file.type.match('image.*')) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    state.selectedImage = e.target.result;
+                    state.selectedImageType = 'uploaded';
+                    elements.previewImg.src = state.selectedImage;
+                    elements.imagePreviewContainer.style.display = 'block';
+                    elements.removeImageBtn.style.display = 'inline-block';
+                    updateActionButtons();
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function removeImage() {
+            state.selectedImage = null;
+            state.selectedImageType = null;
+            elements.imageUpload.value = '';
+            elements.imagePreviewContainer.style.display = 'none';
+            elements.removeImageBtn.style.display = 'none';
+            updateActionButtons();
+        }
+
+        async function generateImageWithAI() {
+            if (!elements.replicateKey.value.trim()) {
+                alert('❌ Introduce tu Replicate API Key');
+                return;
+            }
+
+            setButtonsDisabled(true);
+            elements.generateImageBtn.textContent = '🔄 Generando...';
+
+            try {
+                const prompt = `Imagen de ${elements.genre.value}, estilo cinematográfico, atmosférico, alta calidad`;
+                
+                showProgress(10, 'Generando imagen con IA...');
+                
+                const response = await fetch('/.netlify/functions/generate-image', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        replicateKey: elements.replicateKey.value.trim(),
+                        prompt: prompt,
+                        genre: elements.genre.value
+                    })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Error generando imagen');
+                }
+                
+                const result = await response.json();
+                
+                showProgress(100, 'Imagen generada');
+                
+                state.selectedImage = result.imageUrl;
+                state.selectedImageType = 'generated';
+                elements.previewImg.src = state.selectedImage;
+                elements.imagePreviewContainer.style.display = 'block';
+                elements.removeImageBtn.style.display = 'inline-block';
+                updateActionButtons();
+
+                setTimeout(() => hideProgress(), 2000);
+
+            } catch (error) {
+                alert('❌ Error al generar imagen: ' + error.message);
+                hideProgress();
+            } finally {
+                elements.generateImageBtn.textContent = '🎨 Generar Imagen IA';
+                setButtonsDisabled(false);
+            }
+        }
+
+        // ========== GENERACIÓN DE CONTENIDO CON HUMANIZACIÓN ==========
+        elements.generateIdeaBtn.addEventListener('click', generateIdeaWithTitle);
+        elements.generateScriptBtn.addEventListener('click', generateScriptWithHumanization);
+        elements.createVideoBtn.addEventListener('click', createVideoReal);
+        elements.downloadBtn.addEventListener('click', downloadScript);
+
+        async function createVideoReal() {
+    if (!validateVideoCreation()) return;
+
+    setButtonsDisabled(true);
+    elements.createVideoBtn.textContent = '🎬 Creando Video REAL...';
+
+    try {
+        const videoTitle = elements.videoTitle.value.trim() || 
+            `Video ${new Date().toLocaleDateString()} - ${elements.genre.value}`;
+
+        const videoData = {
+            script: elements.scriptOutput.value,
+            imageUrl: state.selectedImage,
+            genre: elements.genre.value,
+            videoTitle: videoTitle,
+            voice: elements.ttsVoice.value
+        };
+
+        showProgress(10, 'Seleccionando sonido de fondo...');
+
+        // Usar la función REAL de video
+        const response = await fetch('/.netlify/functions/create-video-real', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(videoData)
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Error creando video');
+        }
+
+        const result = await response.json();
+        
+        showProgress(100, 'Video REAL creado!');
+        
+        // Guardar en historial
+        saveToHistory({
+            ...result,
+            title: videoTitle,
+            duration: Math.round(elements.scriptOutput.value.split(/\s+/).length / 150),
+            wordCount: elements.scriptOutput.value.split(/\s+/).length
+        });
+        
+        alert(`✅ Video REAL creado!\n🎬 ${videoTitle}\n🎵 Con sonido: ${result.backgroundSound}`);
+        
+        setTimeout(() => hideProgress(), 3000);
+
+    } catch (error) {
+        alert('❌ Error al crear video REAL: ' + error.message);
+        hideProgress();
+    } finally {
+        elements.createVideoBtn.textContent = '🎬 Crear Video REAL';
+        setButtonsDisabled(false);
+    }
+}
+        async function generateIdeaWithTitle() {
+            if (!elements.apiKey.value.trim()) {
+                alert('❌ Introduce tu OpenRouter API Key');
+                return;
+            }
+
+            setButtonsDisabled(true);
+            elements.generateIdeaBtn.textContent = '🔄 Generando idea + título...';
+
+            try {
+                const response = await fetch('/.netlify/functions/generate-idea', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        apiKey: elements.apiKey.value.trim(),
+                        genre: elements.genre.value,
+                        language: elements.language.value,
+                        generateTitle: true
+                    })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Error generando idea');
+                }
+                
+                const result = await response.json();
+                elements.idea.value = result.idea;
+                
+                // Si viene con título, aplicarlo
+                if (result.title) {
+                    elements.videoTitle.value = result.title;
+                }
+                
+                alert('✅ Idea + Título generados exitosamente!');
+
+            } catch (error) {
+                alert('❌ Error al generar idea: ' + error.message);
+            } finally {
+                elements.generateIdeaBtn.textContent = '✨ Generar Idea + Título Auto';
+                setButtonsDisabled(false);
+            }
+        }
+
+        async function generateScriptWithHumanization() {
+            if (!elements.apiKey.value.trim()) {
+                alert('❌ Introduce tu OpenRouter API Key');
+                return;
+            }
+
+            setButtonsDisabled(true);
+            elements.generateScriptBtn.textContent = '🔄 Generando con humanización...';
+            elements.scriptOutput.value = '🔄 Generando guion completo con humanización 3x...';
+
+            try {
+                showProgress(10, 'Generando guion con humanización...');
+                
+                const response = await fetch('/.netlify/functions/generate-script', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        apiKey: elements.apiKey.value.trim(),
+                        genre: elements.genre.value,
+                        language: elements.language.value,
+                        wordCount: parseInt(elements.wordCount.value),
+                        idea: elements.idea.value.trim(),
+                        humanization: state.humanizationEnabled
+                    })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Error generando guion');
+                }
+                
+                const result = await response.json();
+                
+                showProgress(100, 'Guion con humanización generado');
+                elements.scriptOutput.value = result.script;
+                elements.actualWordCount.textContent = result.wordCount || result.script.split(/\s+/).length;
+                
+                // Mostrar vista previa de humanización
+                showHumanizationPreview(result.script);
+                updateActionButtons();
+
+                setTimeout(() => hideProgress(), 2000);
+
+            } catch (error) {
+                elements.scriptOutput.value = '❌ Error: ' + error.message;
+                hideProgress();
+            } finally {
+                elements.generateScriptBtn.textContent = '📜 Generar Guion con Humanización';
+                setButtonsDisabled(false);
+            }
+        }
+
+        function showHumanizationPreview(script) {
+            // Extraer las primeras líneas que muestren humanización
+            const lines = script.split('\n').slice(0, 10);
+            let previewHTML = '';
+            
+            lines.forEach(line => {
+                if (line.includes('[') && line.includes(']')) {
+                    // Resaltar direcciones vocales
+                    const highlighted = line.replace(/\[(.*?)\]/g, '<span class="vocal-direction">[$1]</span>');
+                    previewHTML += `<div>${highlighted}</div>`;
+                } else if (line.trim().length > 0) {
+                    previewHTML += `<div>${line}</div>`;
+                }
+            });
+            
+            if (previewHTML) {
+                elements.previewContent.innerHTML = previewHTML;
+                elements.scriptPreview.style.display = 'block';
+            }
+        }
+
+        async function createVideo() {
+            if (!validateVideoCreation()) return;
+
+            setButtonsDisabled(true);
+            elements.createVideoBtn.textContent = '🔄 Creando Video...';
+
+            try {
+                const videoTitle = elements.videoTitle.value.trim() || 
+                    `Video ${new Date().toLocaleDateString()} - ${elements.genre.value}`;
+
+                const videoData = {
+                    replicateKey: elements.replicateKey.value.trim(),
+                    script: elements.scriptOutput.value,
+                    image: state.selectedImage,
+                    imageType: state.selectedImageType,
+                    genre: elements.genre.value,
+                    language: elements.language.value,
+                    voice: elements.ttsVoice.value,
+                    videoTitle: videoTitle,
+                    humanization: state.humanizationEnabled
+                };
+
+                showProgress(10, 'Iniciando creación de video con humanización...');
+
+                const response = await fetch('/.netlify/functions/create-video', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(videoData)
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Error creando video');
+                }
+
+                const result = await response.json();
+                
+                showProgress(100, 'Video completado!');
+                
+                // Guardar en historial
+                saveToHistory({
+                    ...result.result,
+                    title: videoTitle,
+                    duration: Math.round(elements.scriptOutput.value.split(/\s+/).length / 150),
+                    wordCount: elements.scriptOutput.value.split(/\s+/).length
+                });
+                
+                alert(`✅ Video creado exitosamente!\n🎬 Título: ${videoTitle}\n⏱️ Duración: ${Math.round(elements.scriptOutput.value.split(/\s+/).length / 150)} minutos`);
+                
+                setTimeout(() => hideProgress(), 3000);
+
+            } catch (error) {
+                alert('❌ Error al crear video: ' + error.message);
+                hideProgress();
+            } finally {
+                elements.createVideoBtn.textContent = '🎬 Crear Video';
+                setButtonsDisabled(false);
+            }
+        }
+
+        function downloadScript() {
+            const script = elements.scriptOutput.value;
+            if (!script) return;
+
+            const blob = new Blob([script], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `guion_${Date.now()}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            alert('✅ Guion descargado exitosamente!');
+        }
+
+        // ========== VALIDACIONES Y UTILIDADES ==========
+        function validateVideoCreation() {
+            if (!elements.replicateKey.value.trim()) {
+                alert('❌ Introduce tu Replicate API Key');
+                return false;
+            }
+            if (!elements.scriptOutput.value.trim()) {
+                alert('❌ Genera un guion primero');
+                return false;
+            }
+            if (!state.selectedImage) {
+                alert('❌ Selecciona o genera una imagen');
+                return false;
+            }
+            return true;
+        }
+
+        function updateActionButtons() {
+            const hasScript = elements.scriptOutput.value.trim().length > 0;
+            const hasImage = state.selectedImage !== null;
+            
+            elements.downloadBtn.disabled = !hasScript;
+            elements.createVideoBtn.disabled = !hasScript || !hasImage;
+        }
+
+        function setButtonsDisabled(disabled) {
+            const buttons = [
+                elements.generateIdeaBtn, elements.generateScriptBtn, 
+                elements.createVideoBtn, elements.downloadBtn,
+                elements.uploadImageBtn, elements.generateImageBtn,
+                elements.connectSheetsBtn, elements.updateAnalyticsBtn,
+                elements.refreshHistoryBtn, elements.syncAllAnalyticsBtn,
+                elements.clearHistoryBtn, elements.generateTitleBtn
+            ];
+            
+            buttons.forEach(btn => {
+                if (btn) btn.disabled = disabled;
+            });
+            
+            if (!disabled) updateActionButtons();
+        }
+
+        function showProgress(percentage, text) {
+            elements.videoProgress.style.display = 'block';
+            elements.progressFill.style.width = percentage + '%';
+            elements.progressText.textContent = text;
+        }
+
+        function hideProgress() {
+            elements.videoProgress.style.display = 'none';
+            elements.progressFill.style.width = '0%';
+        }
+
+        // ========== HISTORIAL Y ANALYTICS ==========
+        function loadHistory() {
+            const saved = localStorage.getItem('videoMachineHistory');
+            if (saved) {
+                state.videoHistory = JSON.parse(saved);
+                renderHistory();
+                updateEarningsSummary();
+            }
+        }
+
+        function saveToHistory(videoData) {
+            const historyItem = {
+                id: Date.now().toString(),
+                title: videoData.title || videoData.videoTitle,
+                genre: videoData.genre,
+                language: videoData.language,
+                duration: videoData.duration,
+                videoUrl: videoData.videoUrl,
+                created: new Date().toISOString(),
+                uploadDate: new Date().toISOString(),
+                earnings: videoData.earnings || 0,
+                views: videoData.views || 0,
+                wordCount: videoData.wordCount || 0
+            };
+
+            state.videoHistory.unshift(historyItem);
+            if (state.videoHistory.length > 50) {
+                state.videoHistory = state.videoHistory.slice(0, 50);
+            }
+
+            localStorage.setItem('videoMachineHistory', JSON.stringify(state.videoHistory));
+            renderHistory();
+            updateEarningsSummary();
+        }
+
+        function renderHistory() {
+            if (!elements.videoHistoryGrid) return;
+
+            if (state.videoHistory.length === 0) {
+                elements.videoHistoryGrid.innerHTML = 
+                    `<div style="text-align: center; padding: 3em; color: #888;">
+                        <p>🎬 Tus videos de 15-20 minutos aparecerán aquí</p>
+                        <p><small>Cada video incluirá: Título, Duración, Vistas, Ingresos y Fechas</small></p>
+                    </div>`;
+                return;
+            }
+
+            elements.videoHistoryGrid.innerHTML = state.videoHistory.map(video => 
+                `<div class="video-card">
+                    <h4>${video.title}</h4>
+                    <p style="color: #b0b0b0; font-size: 0.9em; margin: 0.5em 0;">
+                        ${video.genre} | ${video.language} | ${video.duration} min | ${video.wordCount} palabras
+                    </p>
+                    <div class="video-stats">
+                        <div class="stat-item">
+                            <span>👁️ Vistas:</span>
+                            <span class="views">${video.views.toLocaleString()}</span>
+                        </div>
+                        <div class="stat-item">
+                            <span>💰 Ingresos:</span>
+                            <span class="money">$${video.earnings.toFixed(2)}</span>
+                        </div>
+                        <div class="stat-item">
+                            <span>📅 Creado:</span>
+                            <span>${new Date(video.created).toLocaleDateString()}</span>
+                        </div>
+                        <div class="stat-item">
+                            <span>⏱️ Duración:</span>
+                            <span class="duration">${video.duration} min</span>
+                        </div>
+                    </div>
+                    <div style="margin-top: 1em;">
+                        <a href="${video.videoUrl}" target="_blank" 
+                           style="color: var(--accent-color); text-decoration: none; font-weight: bold;">
+                           🎬 Ver Video
+                        </a>
+                    </div>
+                </div>`
+            ).join('');
+        }
+
+        function updateEarningsSummary() {
+            const totalEarnings = state.videoHistory.reduce((sum, video) => sum + parseFloat(video.earnings), 0);
+            const totalVideos = state.videoHistory.length;
+            const totalViews = state.videoHistory.reduce((sum, video) => sum + parseInt(video.views), 0);
+            const avgDuration = totalVideos > 0 ? 
+                Math.round(state.videoHistory.reduce((sum, video) => sum + parseInt(video.duration), 0) / totalVideos) : 0;
+
+            document.getElementById('totalEarnings').textContent = '$' + totalEarnings.toFixed(2);
+            document.getElementById('totalVideos').textContent = totalVideos;
+            document.getElementById('totalViews').textContent = totalViews.toLocaleString();
+            document.getElementById('averageDuration').textContent = avgDuration + ' min';
+        }
+
+        // ========== GOOGLE SHEETS ==========
+        elements.connectSheetsBtn.addEventListener('click', () => {
+            alert('🔗 Función de Google Sheets - Por implementar completamente');
+            elements.sheetsStatus.textContent = 'En desarrollo';
+            elements.sheetsStatus.className = 'status-pill status-ok';
+        });
+
+        elements.updateAnalyticsBtn.addEventListener('click', () => {
+            alert('📈 Actualizando estadísticas...');
+            updateEarningsSummary();
+        });
+
+        // ========== BOTONES DE HISTORIAL ==========
+        elements.refreshHistoryBtn.addEventListener('click', () => {
+            loadHistory();
+            alert('✅ Historial actualizado');
+        });
+
+        elements.syncAllAnalyticsBtn.addEventListener('click', () => {
+            alert('📊 Sincronizando todas las estadísticas...');
+        });
+
+        elements.clearHistoryBtn.addEventListener('click', () => {
+            if (confirm('¿Estás seguro de que quieres limpiar TODO el historial? Esta acción no se puede deshacer.')) {
+                state.videoHistory = [];
+                localStorage.removeItem('videoMachineHistory');
+                renderHistory();
+                updateEarningsSummary();
+                alert('✅ Historial limpiado completamente');
+            }
+        });
+
+        // ========== VALIDACIÓN DE API KEYS ==========
+        function setupApiKeyValidation() {
+            elements.apiKey.addEventListener('input', function() {
+                const key = this.value.trim();
+                if (key && key.startsWith('sk-or-')) {
+                    elements.apiStatus.textContent = 'Válida';
+                    elements.apiStatus.className = 'status-pill status-ok';
+                } else if (key) {
+                    elements.apiStatus.textContent = 'Inválida';
+                    elements.apiStatus.className = 'status-pill status-fail';
+                } else {
+                    elements.apiStatus.textContent = 'No Validada';
+                    elements.apiStatus.className = 'status-pill status-unknown';
+                }
+            });
+
+            elements.replicateKey.addEventListener('input', function() {
+                const key = this.value.trim();
+                if (key && key.startsWith('r8_')) {
+                    elements.replicateStatus.textContent = 'Válida';
+                    elements.replicateStatus.className = 'status-pill status-ok';
+                } else if (key) {
+                    elements.replicateStatus.textContent = 'Inválida';
+                    elements.replicateStatus.className = 'status-pill status-fail';
+                } else {
+                    elements.replicateStatus.textContent = 'No Validada';
+                    elements.replicateStatus.className = 'status-pill status-unknown';
+                }
+            });
+        }
+
+        // ========== INICIALIZACIÓN ==========
+        function initializeApp() {
+            loadHistory();
+            updateEarningsSummary();
+            setupApiKeyValidation();
+            console.log('✅ Video Machine v7.7 con Humanización 3x inicializada');
+            console.log('🚀 Lista para crear contenido humano y atractivo');
+        }
+
+        // Inicializar aplicación
+        initializeApp();
+    });
+</script>
+</html>
+
+
