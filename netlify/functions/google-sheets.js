@@ -1,51 +1,135 @@
-/**
- * Appends a row to Google Sheets.
- * Either provide accessToken (OAuth user) or a service account (GOOGLE_SA_CLIENT_EMAIL, GOOGLE_SA_PRIVATE_KEY).
- */
 const jwt = require("jsonwebtoken");
 
-async function getServiceAccountToken() {
-  const clientEmail = process.env.GOOGLE_SA_CLIENT_EMAIL;
-  const privateKey = (process.env.GOOGLE_SA_PRIVATE_KEY || "").replace(/\\n/g, "\n");
-  if (!clientEmail || !privateKey) return null;
-  const now = Math.floor(Date.now()/1000);
-  const payload = {
-    iss: clientEmail,
-    sub: clientEmail,
-    scope: "https://www.googleapis.com/auth/spreadsheets",
-    aud: "https://oauth2.googleapis.com/token",
-    iat: now, exp: now + 3600
-  };
-  const token = jwt.sign(payload, privateKey, { algorithm: "RS256" });
-  const res = await fetch("https://oauth2.googleapis.com/token", {
-    method: "POST",
-    headers: { "Content-Type":"application/x-www-form-urlencoded" },
-    body: new URLSearchParams({ grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer", assertion: token })
-  });
-  if (!res.ok) throw new Error(await res.text());
-  const data = await res.json();
-  return data.access_token;
-}
+const cors = {
+  headers: {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Headers": "*",
+    "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
+    "Content-Type": "application/json",
+  },
+};
 
 exports.handler = async (event) => {
-  try {
-    if (event.httpMethod !== "POST") return { statusCode: 405, body: "Method Not Allowed" };
-    const { spreadsheetId, range="Sheet1!A1", values=[["timestamp", new Date().toISOString()]], accessToken=null } = JSON.parse(event.body || "{}");
-    if (!spreadsheetId) return { statusCode: 400, body: "Missing spreadsheetId" };
-    let token = accessToken;
-    if (!token) token = await getServiceAccountToken();
-    if (!token) return { statusCode: 400, body: "Missing accessToken and no service account configured" };
+  if (event.httpMethod === "OPTIONS") {
+    return { statusCode: 200, headers: cors.headers, body: "" };
+  }
 
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(spreadsheetId)}/values/${encodeURIComponent(range)}:append?valueInputOption=RAW`;
-    const res = await fetch(url, {
+  try {
+    const qs = event.queryStringParameters || {};
+    const isPost = event.httpMethod === "POST";
+    const body = isPost && event.body ? JSON.parse(event.body) : {};
+    const action = (body.action || qs.action || "").toLowerCase();
+
+    const SHEET_ID   = body.sheetId   || process.env.GOOGLE_SHEET_ID;
+    const SHEET_NAME = body.sheetName || process.env.GOOGLE_SHEET_NAME || "Videos";
+
+    // --- diag: no expone secretos, solo presencia ---
+    if (action === "diag") {
+      const email = process.env.GOOGLE_SVC_EMAIL || process.env.GOOGLE_CLIENT_EMAIL || "";
+      let key = process.env.GOOGLE_SVC_PRIVATE_KEY || process.env.GOOGLE_PRIVATE_KEY || "";
+      return json(200, {
+        ok: true,
+        hasSheetId: !!SHEET_ID,
+        sheetIdHint: SHEET_ID ? `${SHEET_ID.slice(0,6)}...${SHEET_ID.slice(-4)}` : null,
+        sheetName: SHEET_NAME,
+        hasEmail: !!email,
+        emailDomain: email ? email.split("@")[1] : null,
+        hasKey: !!key,
+        keyLen: key ? key.length : 0,
+      });
+    }
+
+    if (action === "ping") {
+      return json(200, { ok: true, sheetId: !!SHEET_ID, sheetName: SHEET_NAME });
+    }
+
+    if (action !== "listchannels") {
+      return json(400, { error: 'Invalid action. Use "diag", "ping" or "listChannels".' });
+    }
+
+    if (!SHEET_ID) {
+      return json(400, { error: "Missing sheetId (body.sheetId or env GOOGLE_SHEET_ID)." });
+    }
+
+    const SVC_EMAIL =
+      process.env.GOOGLE_SVC_EMAIL ||
+      process.env.GOOGLE_CLIENT_EMAIL;
+
+    let SVC_KEY =
+      process.env.GOOGLE_SVC_PRIVATE_KEY ||
+      process.env.GOOGLE_PRIVATE_KEY;
+
+    if (!SVC_EMAIL || !SVC_KEY) {
+      return json(400, {
+        error: "Missing Google Service Account credentials.",
+        need: ["GOOGLE_SVC_EMAIL", "GOOGLE_SVC_PRIVATE_KEY"],
+        note: "Add env vars in Netlify and share the Sheet with that email (Viewer).",
+      });
+    }
+
+    // Arreglar \n si viene en una sola línea
+    SVC_KEY = SVC_KEY.replace(/\\n/g, "\n");
+
+    const tokenUrl = "https://oauth2.googleapis.com/token";
+    const now = Math.floor(Date.now() / 1000);
+
+    const signed = jwt.sign(
+      {
+        iss: SVC_EMAIL,
+        scope: "https://www.googleapis.com/auth/spreadsheets.readonly",
+        aud: tokenUrl,
+        exp: now + 3600,
+        iat: now,
+      },
+      SVC_KEY,
+      { algorithm: "RS256" }
+    );
+
+    const tokenRes = await fetch(tokenUrl, {
       method: "POST",
-      headers: { "Authorization": `Bearer ${token}`, "Content-Type":"application/json" },
-      body: JSON.stringify({ values })
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
+        assertion: signed,
+      }),
     });
-    if (!res.ok) return { statusCode: res.status, body: await res.text() };
-    const data = await res.json();
-    return { statusCode: 200, body: JSON.stringify(data) };
+
+    if (!tokenRes.ok) {
+      return json(400, {
+        error: "Failed to obtain Google access token",
+        details: await tokenRes.text(),
+      });
+    }
+    const { access_token } = await tokenRes.json();
+
+    const range = encodeURIComponent(`${SHEET_NAME}!A1:Z1000`);
+    const valuesUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`;
+
+    const sheetRes = await fetch(valuesUrl, {
+      headers: { Authorization: `Bearer ${access_token}` },
+    });
+
+    if (!sheetRes.ok) {
+      return json(400, { error: "Sheets API error", details: await sheetRes.text() });
+    }
+
+    const data = await sheetRes.json();
+    const rows = Array.isArray(data.values) ? data.values : [];
+    if (rows.length < 2) return json(200, []);
+
+    const header = rows[0].map((h) => (h || "").toString().trim());
+    const out = rows.slice(1).map((r) => {
+      const obj = {};
+      header.forEach((k, i) => (obj[k || `col${i + 1}`] = (r[i] || "").toString()));
+      return obj;
+    });
+
+    return json(200, out);
   } catch (err) {
-    return { statusCode: 500, body: String(err.stack || err) };
+    return json(500, { error: "Unhandled error", details: err.message || String(err) });
   }
 };
+
+function json(statusCode, obj) {
+  return { statusCode, headers: { ...cors.headers }, body: JSON.stringify(obj) };
+}
