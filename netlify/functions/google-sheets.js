@@ -1,32 +1,32 @@
+"use strict";
+
 const jwt = require("jsonwebtoken");
 
-const cors = {
-  headers: {
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Headers": "*",
-    "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
-    "Content-Type": "application/json",
-  },
+const CORS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
 };
 
 exports.handler = async (event) => {
   if (event.httpMethod === "OPTIONS") {
-    return { statusCode: 200, headers: cors.headers, body: "" };
+    return { statusCode: 204, headers: CORS, body: "" };
+  }
+  if (event.httpMethod !== "POST") {
+    return json(405, { error: "Method Not Allowed. Use POST." });
   }
 
   try {
-    const qs = event.queryStringParameters || {};
-    const isPost = event.httpMethod === "POST";
-    const body = isPost && event.body ? JSON.parse(event.body) : {};
-    const action = (body.action || qs.action || "").toLowerCase();
+    const body = event.body ? JSON.parse(event.body) : {};
+    const action = (body.action || "").toLowerCase();
 
     const SHEET_ID   = body.sheetId   || process.env.GOOGLE_SHEET_ID;
     const SHEET_NAME = body.sheetName || process.env.GOOGLE_SHEET_NAME || "Videos";
 
-    // --- diag: no expone secretos, solo presencia ---
+    // --- diag: no filtra secretos, solo presencia ---
     if (action === "diag") {
       const email = process.env.GOOGLE_SVC_EMAIL || process.env.GOOGLE_CLIENT_EMAIL || "";
-      let key = process.env.GOOGLE_SVC_PRIVATE_KEY || process.env.GOOGLE_PRIVATE_KEY || "";
+      const key   = process.env.GOOGLE_SVC_PRIVATE_KEY || process.env.GOOGLE_PRIVATE_KEY || "";
       return json(200, {
         ok: true,
         hasSheetId: !!SHEET_ID,
@@ -35,7 +35,7 @@ exports.handler = async (event) => {
         hasEmail: !!email,
         emailDomain: email ? email.split("@")[1] : null,
         hasKey: !!key,
-        keyLen: key ? key.length : 0,
+        keyLen: key ? key.length : 0
       });
     }
 
@@ -47,9 +47,7 @@ exports.handler = async (event) => {
       return json(400, { error: 'Invalid action. Use "diag", "ping" or "listChannels".' });
     }
 
-    if (!SHEET_ID) {
-      return json(400, { error: "Missing sheetId (body.sheetId or env GOOGLE_SHEET_ID)." });
-    }
+    if (!SHEET_ID) return json(400, { error: "Missing sheetId." });
 
     const SVC_EMAIL =
       process.env.GOOGLE_SVC_EMAIL ||
@@ -62,74 +60,69 @@ exports.handler = async (event) => {
     if (!SVC_EMAIL || !SVC_KEY) {
       return json(400, {
         error: "Missing Google Service Account credentials.",
-        need: ["GOOGLE_SVC_EMAIL", "GOOGLE_SVC_PRIVATE_KEY"],
-        note: "Add env vars in Netlify and share the Sheet with that email (Viewer).",
+        need: ["GOOGLE_SVC_EMAIL","GOOGLE_SVC_PRIVATE_KEY"],
+        note: "Set env vars in Netlify and share the Sheet with that service account (Viewer)."
       });
     }
 
-    // Arreglar \n si viene en una sola línea
+    // reparar \n escapadas
     SVC_KEY = SVC_KEY.replace(/\\n/g, "\n");
 
     const tokenUrl = "https://oauth2.googleapis.com/token";
-    const now = Math.floor(Date.now() / 1000);
+    const now = Math.floor(Date.now()/1000);
+    const jwtPayload = {
+      iss: SVC_EMAIL,
+      scope: "https://www.googleapis.com/auth/spreadsheets.readonly",
+      aud: tokenUrl,
+      exp: now + 3600,
+      iat: now
+    };
 
-    const signed = jwt.sign(
-      {
-        iss: SVC_EMAIL,
-        scope: "https://www.googleapis.com/auth/spreadsheets.readonly",
-        aud: tokenUrl,
-        exp: now + 3600,
-        iat: now,
-      },
-      SVC_KEY,
-      { algorithm: "RS256" }
-    );
+    const signed = jwt.sign(jwtPayload, SVC_KEY, { algorithm: "RS256" });
 
     const tokenRes = await fetch(tokenUrl, {
       method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      headers: { "Content-Type":"application/x-www-form-urlencoded" },
       body: new URLSearchParams({
         grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
-        assertion: signed,
-      }),
+        assertion: signed
+      })
     });
 
     if (!tokenRes.ok) {
-      return json(400, {
-        error: "Failed to obtain Google access token",
-        details: await tokenRes.text(),
-      });
+      return json(400, { error: "Failed to obtain Google access token", details: await tokenRes.text() });
     }
     const { access_token } = await tokenRes.json();
 
     const range = encodeURIComponent(`${SHEET_NAME}!A1:Z1000`);
     const valuesUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`;
-
-    const sheetRes = await fetch(valuesUrl, {
-      headers: { Authorization: `Bearer ${access_token}` },
-    });
+    const sheetRes = await fetch(valuesUrl, { headers: { Authorization: `Bearer ${access_token}` } });
 
     if (!sheetRes.ok) {
-      return json(400, { error: "Sheets API error", details: await sheetRes.text() });
+      return json(400, { error:"Sheets API error", details: await sheetRes.text() });
     }
 
     const data = await sheetRes.json();
     const rows = Array.isArray(data.values) ? data.values : [];
-    if (rows.length < 2) return json(200, []);
+    if (rows.length < 2) return json(200, []); // no data
 
-    const header = rows[0].map((h) => (h || "").toString().trim());
-    const out = rows.slice(1).map((r) => {
+    const header = rows[0].map(h => (h||"").toString().trim());
+    const out = rows.slice(1).map(r => {
       const obj = {};
-      header.forEach((k, i) => (obj[k || `col${i + 1}`] = (r[i] || "").toString()));
+      header.forEach((k,i)=> obj[k || `col${i+1}`] = (r[i]||"").toString());
       return obj;
     });
 
     return json(200, out);
   } catch (err) {
-    return json(500, { error: "Unhandled error", details: err.message || String(err) });
+    return json(500, { error: "Unhandled error", details: (err && err.message) || String(err) });
   }
 };
 
-function json(statusCode, obj) {
-  return { statusCode, headers: { ...cors.headers }, body: JSON.stringify(obj) };
+function json(statusCode, obj){
+  return {
+    statusCode,
+    headers: { "Content-Type":"application/json", ...CORS },
+    body: JSON.stringify(obj)
+  };
 }
