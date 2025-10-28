@@ -1,162 +1,106 @@
-// Netlify Function: render-scenes
-// Renderiza escenas en Replicate con polling robusto.
-// Requisitos de entorno (Netlify > Site settings > Environment variables):
-//   REPLICATE_API_TOKEN       -> tu token de Replicate (obligatorio)
-//   REPLICATE_MODEL_VERSION   -> ID de versión del modelo en Replicate (obligatorio)
-//                                (ej. 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx')
-
-import fetch from "node-fetch";
-
-// Usa fetch nativo si existe; si no, cae a node-fetch
-const doFetch = (...args) => (globalThis.fetch ? globalThis.fetch(...args) : fetch(...args));
-
-// Helpers
-const json = (code, obj) => ({
-  statusCode: code,
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify(obj),
-});
-
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-
 export const handler = async (event) => {
+  const json = (code, obj) => ({
+    statusCode: code,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(obj),
+  });
+
   try {
     if (event.httpMethod !== "POST") {
       return json(405, { error: "Use POST" });
     }
 
-    const token = process.env.REPLICATE_API_TOKEN;
-    const version = process.env.REPLICATE_MODEL_VERSION;
-
-    if (!token) {
-      return json(400, { error: "Missing REPLICATE_API_TOKEN env var" });
-    }
-    if (!version) {
-      return json(400, {
-        error: "Missing REPLICATE_MODEL_VERSION env var",
-        hint: "En Netlify, define REPLICATE_MODEL_VERSION con el ID de versión del modelo que quieres usar.",
-      });
-    }
-
-    let body = {};
-    try {
-      body = JSON.parse(event.body || "{}");
-    } catch {
-      return json(400, { error: "Invalid JSON body" });
-    }
-
+    const body = JSON.parse(event.body || "{}");
     const scenes = Array.isArray(body.scenes) ? body.scenes : [];
     if (scenes.length === 0) {
-      return json(400, { error: "Provide 'scenes' as a non-empty array" });
+      return json(400, { error: "scenes[] requerido" });
     }
 
-    // Render secuencial con polling
-    const renderedScenes = [];
-    for (const [idx, scene] of scenes.entries()) {
-      const prompt = (scene?.prompt || "").toString().trim();
-      if (!prompt) {
-        return json(400, { error: Scene  is missing 'prompt' });
-      }
+    const token = process.env.REPLICATE_API_TOKEN;
+    if (!token) {
+      return json(400, { error: "Falta REPLICATE_API_TOKEN (configúralo en Netlify)" });
+    }
 
-      // Heurística simple: frames = duración(seg)*fps(=8), acotado [16,256]
-      const fps = Number.isFinite(scene?.fps) ? Math.max(1, Math.min(24, Math.floor(scene.fps))) : 8;
-      const durationSec = Number.isFinite(scene?.duration) ? Math.max(2, Math.min(32, Math.floor(scene.duration))) : 8;
-      const num_frames = Math.max(16, Math.min(256, durationSec * fps));
+    // NOTA: Sin conocer la versión exacta del modelo, devolvemos error detallado si falla.
+    // Cambia MODEL_VERSION por una válida cuando tengamos el detalle del error.
+    const MODEL_VERSION = body.version || "black-forest-labs/flux-schnell"; // placeholder
 
-      // Crea predicción
-      const createRes = await doFetch("https://api.replicate.com/v1/predictions", {
+    const out = [];
+    for (let idx = 0; idx < scenes.length; idx++) {
+      const scene = scenes[idx] || {};
+      const prompt = scene.prompt || "cinematic still frame, dramatic lighting";
+      const duration = scene.duration || 4;
+
+      // 1) Crear predicción
+      const createRes = await fetch("https://api.replicate.com/v1/predictions", {
         method: "POST",
         headers: {
-          Authorization: Token ,
+          Authorization: `Token ${token}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          version,
+          version: MODEL_VERSION,       // si esto no es válido, veremos el detalle abajo
           input: {
             prompt,
-            fps,
-            num_frames,
-            // Campos opcionales comunes (ajústalos si tu modelo los soporta)
-            negative_prompt: scene?.negativePrompt || undefined,
-            seed: Number.isFinite(scene?.seed) ? scene.seed : undefined,
-            // Algunos modelos aceptan 'width'/'height' o 'resolution'
-            width: scene?.width || undefined,
-            height: scene?.height || undefined,
+            // muchos modelos de imagen ignoran 'duration'; lo dejamos aquí por compatibilidad
+            duration
           },
         }),
       });
 
       if (!createRes.ok) {
-        const txt = await createRes.text();
-        return json(400, { error: "Replicate create prediction failed", details: txt });
+        const text = await createRes.text();
+        return json(400, {
+          error: "Replicate API error (create prediction)",
+          status: createRes.status,
+          details: safeText(text),
+          hint: "Revisa que 'version' sea un ID de versión válido del modelo en Replicate.",
+        });
       }
 
       const created = await createRes.json();
-      const predId = created?.id;
-      if (!predId) {
-        return json(400, { error: "Replicate did not return a prediction id", raw: created });
+      if (!created?.urls?.get) {
+        return json(400, { error: "Respuesta inesperada de Replicate (sin urls.get)", created });
       }
 
-      // Polling
-      let status = created?.status || "starting";
-      let outputUrl = null;
-      const startedAt = Date.now();
-      const timeoutMs = 1000 * 60 * 4; // 4 min por escena
-
-      while (true) {
-        // timeout
-        if (Date.now() - startedAt > timeoutMs) {
-          return json(504, { error: Timeout waiting for scene  prediction, prediction: predId });
-        }
-
-        const getRes = await doFetch(https://api.replicate.com/v1/predictions/, {
-          headers: { Authorization: Token  },
+      // 2) Polling hasta terminar
+      let resultUrl = null;
+      for (let tries = 0; tries < 40; tries++) {
+        const pollRes = await fetch(created.urls.get, {
+          headers: { Authorization: `Token ${token}` },
         });
-
-        if (!getRes.ok) {
-          const txt = await getRes.text();
-          return json(400, { error: "Replicate polling failed", details: txt, prediction: predId });
+        if (!pollRes.ok) {
+          const text = await pollRes.text();
+          return json(400, {
+            error: "Replicate API error (poll)",
+            status: pollRes.status,
+            details: safeText(text),
+          });
         }
+        const poll = await pollRes.json();
 
-        const current = await getRes.json();
-        status = current?.status;
-
-        if (status === "succeeded") {
-          // 'output' puede ser array de URLs o un solo URL según el modelo
-          const out = current?.output;
-          if (Array.isArray(out)) {
-            outputUrl = out[out.length - 1] || out[0] || null;
-          } else {
-            outputUrl = out || null;
-          }
+        if (poll.status === "succeeded") {
+          // Algunos modelos devuelven array, otros una sola url.
+          const outUrl = Array.isArray(poll.output) ? poll.output[0] : poll.output;
+          resultUrl = outUrl || null;
           break;
         }
-
-        if (status === "failed" || status === "canceled") {
-          return json(400, { error: Prediction  for scene , prediction: predId, raw: current });
+        if (poll.status === "failed" || poll.status === "canceled") {
+          return json(400, { error: "Replicate job failed", info: poll });
         }
-
-        // backoff simple
-        await sleep(2000);
+        await sleep(1500);
       }
 
-      if (!outputUrl) {
-        return json(400, { error: "Prediction finished but no output URL", prediction: predId });
-      }
-
-      renderedScenes.push({
-        index: idx,
-        prompt,
-        fps,
-        duration: durationSec,
-        num_frames,
-        url: outputUrl,
-        predictionId: predId,
-      });
+      out.push(resultUrl);
     }
 
-    return json(200, { renderedScenes });
-  } catch (err) {
-    return json(500, { error: err?.message || String(err) });
+    return json(200, { renderedScenes: out });
+  } catch (e) {
+    return json(500, { error: e.message, stack: e.stack });
   }
 };
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+function safeText(t) {
+  try { return JSON.parse(t); } catch { return t; }
+}
