@@ -1,221 +1,282 @@
-<!DOCTYPE html>
+﻿<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI Content Creator Manager</title>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>AI Content Manager</title>
 <style>
-:root {
-  --gold: #ffb300;
-  --dark1: #101010;
-  --dark2: #181818;
-  --dark3: #222;
-  --text: #f5f5f5;
-  --accent: #ffb300;
-}
-* {box-sizing:border-box;}
-body {
-  margin:0; font-family:'Inter',sans-serif; background:var(--dark1); color:var(--text);
-  display:flex; height:100vh; overflow:hidden;
-}
-aside {
-  width:260px; background:linear-gradient(180deg,var(--dark2),#0d0d0d);
-  border-right:1px solid var(--dark3); padding:20px;
-  display:flex; flex-direction:column; align-items:stretch;
-}
-aside h1 {color:var(--gold); font-size:1.3em; margin-bottom:15px; text-transform:uppercase; letter-spacing:1px;}
-aside button {
-  background:#1a1a1a; color:var(--text); border:1px solid var(--dark3);
-  border-radius:6px; padding:10px; margin-bottom:8px; cursor:pointer;
-  transition:all 0.25s ease; font-weight:600;
-}
-aside button:hover {background:var(--gold); color:#000;}
-#channelList {
-  flex:1; overflow-y:auto; margin-top:10px; border-top:1px solid var(--dark3); padding-top:10px;
-}
-.channel {
-  background:#1c1c1c; border:1px solid var(--dark3); border-radius:5px;
-  padding:10px; margin-bottom:8px;
-}
-.channel span {color:var(--gold); font-weight:600;}
-
-main {
-  flex:1; padding:20px; overflow-y:auto; background:var(--dark2);
-}
-header {
-  color:var(--gold); font-size:1.8em; font-weight:600;
-  text-shadow:0 0 8px var(--gold); margin-bottom:20px;
-}
-.section {
-  background:#141414; border:1px solid var(--dark3); border-radius:8px;
-  padding:15px; margin-bottom:15px;
-}
-.section h2 {
-  color:var(--gold); margin-bottom:10px; font-size:1.2em;
-}
-.flex-row {display:flex; gap:10px; flex-wrap:wrap;}
-.action-btn {
-  background:#1f1f1f; color:var(--text); border:1px solid var(--dark3);
-  border-radius:6px; padding:10px 14px; cursor:pointer; transition:0.25s;
-}
-.action-btn:hover {background:var(--gold); color:#000;}
-.status-dot {width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:6px;}
-.green {background:#00e676;} .yellow{background:#ffd600;} .red{background:#f44336;}
-.log {background:#0d0d0d; color:#ccc; padding:10px; height:150px; overflow-y:auto; border-radius:5px; font-family:monospace; font-size:0.9em;}
-.card-grid {display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:10px;}
-.card {
-  background:#1a1a1a; border:1px solid var(--dark3); border-radius:8px; padding:12px;
-  text-align:center; transition:0.25s;
-}
-.card:hover {transform:translateY(-2px); border-color:var(--gold);}
-.card h3 {color:var(--gold); margin:0 0 6px;}
-.metric {font-size:1.1em; font-weight:600;}
-small {color:#aaa;}
+  :root{
+    --bg:#0b0b0f; --panel:#121218; --muted:#1b1b24; --text:#e8e8ea;
+    --gold:#ffb300; --gold-2:#ffcd4d; --accent:#5ad1ff; --danger:#ff5263; --ok:#24d17e;
+  }
+  *{box-sizing:border-box} body{margin:0;background:radial-gradient(1200px 800px at 10% -10%,#141424 0%,#0b0b0f 40%),#0b0b0f;color:var(--text);font-family:Inter,system-ui,Segoe UI,Arial,sans-serif}
+  .wrap{max-width:1100px;margin:32px auto;padding:20px}
+  .title{display:flex;align-items:center;gap:12px}
+  .pill{padding:6px 10px;border:1px solid #2a2a38;border-radius:999px;background:linear-gradient(180deg,#161620,#0f0f16);font-size:12px;opacity:.9}
+  .gold{color:#17130a;background:linear-gradient(180deg,var(--gold),var(--gold-2));border:none}
+  .grid{display:grid;gap:16px}
+  .two{grid-template-columns:1fr 1fr}
+  .card{background:linear-gradient(180deg,#13131b,#0d0d13);border:1px solid #1e1e28;border-radius:16px;padding:16px;box-shadow:0 12px 40px rgba(0,0,0,.35)}
+  .card h3{margin:0 0 8px 0;font-weight:700;letter-spacing:.2px}
+  .row{display:flex;gap:8px;flex-wrap:wrap}
+  input,select,textarea{width:100%;background:#0c0c12;color:var(--text);border:1px solid #232331;border-radius:10px;padding:10px 12px}
+  textarea{min-height:160px}
+  button{border:0;border-radius:12px;padding:10px 14px;font-weight:700;color:#0b0b0f;cursor:pointer}
+  .btn-gold{background:linear-gradient(180deg,var(--gold),var(--gold-2))}
+  .btn-ghost{background:#171721;color:#eaeaf0;border:1px solid #2a2a38}
+  .btn-danger{background:linear-gradient(180deg,#ff6b7a,#ff5263);color:white}
+  .btn-ok{background:linear-gradient(180deg,#2ee79f,#24d17e);color:#062014}
+  .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:12px}
+  .status{display:inline-flex;align-items:center;gap:8px}
+  .dot{width:10px;height:10px;border-radius:999px;background:#666}
+  .ok{background:var(--ok)} .bad{background:var(--danger)} .warn{background:var(--gold)}
+  details{border:1px solid #242434;border-radius:14px;background:#111119}
+  summary{list-style:none;padding:14px 14px;cursor:pointer;font-weight:700}
+  summary::-webkit-details-marker{display:none}
+  details[open]{outline:1px solid #2b2b3b}
+  .glow{box-shadow:0 0 0 1px rgba(255,179,0,.15), 0 10px 40px rgba(255,179,0,.12)}
+  .preview-img{max-width:100%;max-height:220px;border-radius:12px;border:1px solid #2b2b3b}
+  .bar{height:10px;background:#151522;border-radius:999px;overflow:hidden}
+  .fill{height:100%;width:0;background:linear-gradient(90deg,#ffd16e,#ffb300)}
+  .small{font-size:12px;opacity:.85}
+  a{color:var(--accent);text-decoration:none}
 </style>
 </head>
 <body>
-<aside>
-  <h1>Studio Manager</h1>
-  <button id="refreshChannels">🔄 Refresh Channels</button>
-  <button id="runAll">🚀 Run All Channels</button>
-  <button id="fetchTrends">🌍 Fetch Trends</button>
-  <button id="checkResources">🧩 Check Resources</button>
-  <button id="openAnalytics">📊 Show Analytics</button>
-  <button id="authYouTube">🎥 Authorize YouTube</button>
-  <div id="channelList">Loading channels...</div>
-</aside>
-<main>
-  <header>AI Content Creator Manager</header>
+<div class="wrap">
+  <div class="title">
+    <h1 style="margin:0">AI Content Manager</h1>
+    <span class="pill gold">Gold Mode</span>
+    <span class="pill">Dark • Cinematic</span>
+    <span class="pill">End-to-End</span>
+  </div>
 
-  <div class="section">
-    <h2>⚡ Quick Actions</h2>
-    <div class="flex-row">
-      <button class="action-btn" id="generateScript">📝 Generate Script</button>
-      <button class="action-btn" id="createVideo">🎬 Create Video</button>
-      <button class="action-btn" id="uploadYouTube">⬆️ Upload to YouTube</button>
-      <button class="action-btn" id="optimizeAI">🤖 AI Optimize</button>
-      <button class="action-btn" id="refreshLogs">📜 Clear Logs</button>
+  <!-- Controls -->
+  <div class="grid two">
+    <div class="card glow">
+      <h3>Basics</h3>
+      <div class="grid">
+        <div class="row">
+          <input id="title" placeholder="Video title (auto if empty)"/>
+        </div>
+        <div class="row">
+          <select id="genre">
+            <option>Horror Psicológico</option>
+            <option>Crimen Real</option>
+            <option>Misterios</option>
+            <option>Suspenso</option>
+            <option>Paranormal</option>
+          </select>
+          <select id="lang">
+            <option value="es">Español</option>
+            <option value="en">Inglés</option>
+          </select>
+          <input id="words" type="number" min="800" max="4000" step="100" value="2500" />
+        </div>
+        <div class="row">
+          <input id="openrouter" placeholder="OpenRouter API Key (sk-or-…)" />
+          <input id="replicate" placeholder="Replicate API Token (r8_…)" />
+        </div>
+        <div class="row">
+          <input id="sheetsId" placeholder="Google Sheet ID" value="1fkNcw3Av6DYxEG57WPbw54Tl-NyJQC5BMjyafCb547k"/>
+          <input id="sheetsTab" placeholder="Sheet name" value="Videos"/>
+        </div>
+        <div class="row">
+          <button class="btn-gold" id="btnIdea">✨ Idea + Título</button>
+          <button class="btn-gold" id="btnScript">📜 Generar Guion</button>
+          <button class="btn-ghost" id="btnImg">🎨 Generar Imagen</button>
+          <button class="btn-ok" id="btnVideo">🎬 Generar Video</button>
+          <button class="btn-ghost" id="btnSave">📊 Guardar en Sheets</button>
+        </div>
+        <div class="row small status">
+          <span class="dot" id="dotFns"></span> Functions
+          <span class="dot" id="dotIdea"></span> Idea
+          <span class="dot" id="dotScript"></span> Script
+          <span class="dot" id="dotImg"></span> Img
+          <span class="dot" id="dotVid"></span> Video
+          <span class="dot" id="dotSheet"></span> Sheets
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Idea</h3>
+      <textarea id="idea" placeholder="Describe la idea base…"></textarea>
     </div>
   </div>
 
-  <div class="section" id="analyticsSection">
-    <h2>📊 Channel Analytics</h2>
-    <div class="card-grid" id="analyticsGrid">
-      <div class="card"><h3>Horror Factory</h3><div class="metric">98% Success</div><small>Last 24h</small></div>
+  <!-- Collapsibles -->
+  <details class="card" open>
+    <summary>📜 Guion (<span id="wc">0</span> palabras)</summary>
+    <textarea id="script" class="mono" placeholder="El guion aparecerá aquí…"></textarea>
+    <div class="bar" style="margin-top:10px"><div class="fill" id="fill"></div></div>
+    <div class="small" id="progressTxt">Listo.</div>
+  </details>
+
+  <details class="card">
+    <summary>🖼️ Imagen</summary>
+    <div class="row">
+      <input id="imgPrompt" placeholder="Prompt para la portada (auto si vacío)"/>
+      <button class="btn-ghost" id="btnUpload">📁 Subir</button>
+      <input id="file" type="file" accept="image/*" style="display:none"/>
     </div>
-  </div>
-
-  <div class="section">
-    <h2>🧠 Resource Monitor</h2>
-    <div id="resources">
-      <p><span class="status-dot green"></span>Freesound API</p>
-      <p><span class="status-dot green"></span>Replicate API</p>
-      <p><span class="status-dot green"></span>TTS Engine</p>
-      <p><span class="status-dot green"></span>Google Sheets</p>
+    <div id="imgWrap" style="margin-top:12px;display:none">
+      <img id="img" class="preview-img" />
     </div>
-  </div>
+  </details>
 
-  <div class="section" id="trendsSection">
-    <h2>🔥 Global & YouTube Trends</h2>
-    <div id="trendsContainer">Press “Fetch Trends” to load global data.</div>
-  </div>
+  <details class="card">
+    <summary>🎬 Video</summary>
+    <div class="row">
+      <select id="voice">
+        <option value="female_01">Femenina (ES) Conversacional</option>
+        <option value="male_01">Masculina (ES) Dramática</option>
+        <option value="female_02">Female (EN) Natural</option>
+        <option value="male_02">Male (EN) Deep</option>
+      </select>
+    </div>
+    <div class="row small" id="videoOut">Sin ejecutar.</div>
+  </details>
 
-  <div class="section">
-    <h2>📜 System Log</h2>
-    <div id="systemLog" class="log"></div>
-  </div>
-</main>
+  <details class="card">
+    <summary>📊 Historial</summary>
+    <div id="history" class="small">Sin registros aún.</div>
+  </details>
+</div>
 
 <script>
-const log = msg => {
-  const el = document.getElementById('systemLog');
-  const time = new Date().toLocaleTimeString();
-  el.innerHTML += '[' + time + '] ' + msg + '<br>';
-  el.scrollTop = el.scrollHeight;
+const $ = s=>document.querySelector(s);
+const set = (id,ok)=>{$(id).classList.remove('ok','bad','warn');$(id).classList.add(ok?'ok':'bad');}
+
+async function ping(){ try{
+  const r=await fetch('/.netlify/functions/hello'); if(r.ok) set('#dotFns',true);
+}catch{ set('#dotFns',false) } }
+ping();
+
+function wc(t){ return (t||'').trim().split(/\s+/).filter(Boolean).length }
+function progress(p,t){ $('#fill').style.width=p+'%'; $('#progressTxt').textContent=t||''; }
+
+async function post(url,body){
+  const r = await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  if(!r.ok){ let e='Error'; try{ e=(await r.json()).error||e }catch{} throw new Error(e) }
+  return r.json();
+}
+
+// Idea + título
+$('#btnIdea').onclick = async ()=>{
+  try{
+    progress(5,'Generando idea…');
+    const res = await post('/.netlify/functions/generate-idea',{
+      apiKey: $('#openrouter').value.trim(),
+      genre: $('#genre').value,
+      language: $('#lang').value,
+      generateTitle: true,
+      idea: $('#idea').value.trim() || undefined
+    });
+    $('#idea').value = res.idea || $('#idea').value;
+    if(res.title && !$('#title').value) $('#title').value = res.title;
+    set('#dotIdea',true);
+    progress(25,'Idea lista.');
+  }catch(e){ alert('Idea: '+e.message); set('#dotIdea',false); progress(0,''); }
 };
 
-async function fetchChannels() {
-  log('Fetching channels from Google Sheets...');
-  try {
-    const res = await fetch('/.netlify/functions/google-sheets');
-    const data = await res.json();
-    const list = document.getElementById('channelList');
-    list.innerHTML = '';
-    data.forEach(ch => {
-      const div = document.createElement('div');
-      div.className = 'channel';
-      div.innerHTML = '<span>' + ch.channel + '</span><br>' + ch.genre + ' | ' + (ch.status || 'Active');
-      list.appendChild(div);
+// Script
+$('#btnScript').onclick = async ()=>{
+  try{
+    progress(30,'Generando guion…');
+    const res = await post('/.netlify/functions/generate-script',{
+      apiKey: $('#openrouter').value.trim(),
+      genre: $('#genre').value,
+      language: $('#lang').value,
+      wordCount: parseInt($('#words').value,10)||2500,
+      idea: $('#idea').value.trim(),
+      humanization: true
     });
-    log('✅ Channels loaded: ' + data.length);
-  } catch (err) {
-    log('❌ Failed to load channels: ' + err);
-  }
+    $('#script').value = res.script || '';
+    $('#wc').textContent = res.wordCount || wc(res.script);
+    set('#dotScript',true);
+    progress(70,'Guion listo.');
+  }catch(e){ alert('Script: '+e.message); set('#dotScript',false); progress(0,''); }
+};
+
+// Imagen (Replicate)
+$('#btnImg').onclick = async ()=>{
+  try{
+    progress(75,'Generando imagen…');
+    const prompt = $('#imgPrompt').value.trim() || `Key art ${$('#genre').value}, cinematic, dramatic lighting, 4k`;
+    const res = await post('/.netlify/functions/generate-image',{
+      replicateKey: $('#replicate').value.trim(),
+      prompt, genre: $('#genre').value
+    });
+    if(res.imageUrl){ $('#img').src=res.imageUrl; $('#imgWrap').style.display='block'; set('#dotImg',true); progress(85,'Imagen lista.'); }
+    else throw new Error('Sin URL de imagen');
+  }catch(e){ alert('Imagen: '+e.message); set('#dotImg',false); progress(0,''); }
+};
+
+// Upload local image preview
+$('#btnUpload').onclick = ()=> $('#file').click();
+$('#file').onchange = (ev)=>{
+  const f=ev.target.files[0]; if(!f) return;
+  const reader = new FileReader();
+  reader.onload = e => { $('#img').src=e.target.result; $('#imgWrap').style.display='block'; set('#dotImg',true); };
+  reader.readAsDataURL(f);
+};
+
+// Video (pipeline Replicate/no-FFmpeg)
+$('#btnVideo').onclick = async ()=>{
+  try{
+    progress(90,'Creando video…');
+    const res = await post('/.netlify/functions/generate-video',{
+      script: $('#script').value,
+      imageUrl: $('#img').src || null,
+      genre: $('#genre').value,
+      videoTitle: $('#title').value || `Video ${new Date().toLocaleDateString()}`,
+      voice: $('#voice').value
+    });
+    $('#videoOut').innerHTML = res.videoUrl
+      ? `✅ <a href="${res.videoUrl}" target="_blank">Ver video</a>`
+      : `✅ Video creado.`;
+    set('#dotVid',true);
+    progress(100,'Video listo.');
+    saveHistory(res.videoUrl);
+  }catch(e){ alert('Video: '+e.message); set('#dotVid',false); progress(0,''); }
+};
+
+// Sheets (depende de tu function google-sheets.js)
+$('#btnSave').onclick = async ()=>{
+  try{
+    const row = {
+      timestamp: new Date().toISOString(),
+      title: $('#title').value,
+      genre: $('#genre').value,
+      lang: $('#lang').value,
+      words: $('#wc').textContent,
+      videoUrl: ($('#videoOut a')||{}).href || ''
+    };
+    const res = await post('/.netlify/functions/google-sheets',{
+      sheetId: $('#sheetsId').value.trim(),
+      sheetName: $('#sheetsTab').value.trim(),
+      row
+    });
+    if(res.ok){ set('#dotSheet',true); alert('Guardado en Sheets ✅'); }
+    else throw new Error(res.error||'Fallo al guardar');
+  }catch(e){ alert('Sheets: '+e.message); set('#dotSheet',false); }
+};
+
+// Historial local
+function saveHistory(url){
+  const item = {
+    id: Date.now(), title: $('#title').value||'(sin título)',
+    url: url||'', wc: $('#wc').textContent, date: new Date().toLocaleString()
+  };
+  const arr = JSON.parse(localStorage.getItem('managerHistory')||'[]');
+  arr.unshift(item); localStorage.setItem('managerHistory', JSON.stringify(arr)); renderHistory();
 }
-
-async function runAllChannels() {
-  log('🚀 Running all channels...');
-  try {
-    const res = await fetch('/.netlify/functions/google-sheets');
-    const channels = await res.json();
-    for (const ch of channels) {
-      log('🎬 Generating for ' + ch.channel + '...');
-      await fetch('/.netlify/functions/create-video-real', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(ch)
-      });
-      log('✅ Completed ' + ch.channel);
-    }
-    log('🏁 All channels finished.');
-  } catch (err) {
-    log('❌ Error running channels: ' + err);
-  }
+function renderHistory(){
+  const arr = JSON.parse(localStorage.getItem('managerHistory')||'[]');
+  $('#history').innerHTML = arr.length? arr.map(v=>`• ${v.date} — <strong>${v.title}</strong> (${v.wc}w) ${v.url?`— <a href="${v.url}" target="_blank">ver</a>`:''}`).join('<br/>') : 'Sin registros aún.';
 }
-
-async function fetchTrends() {
-  log('Fetching global & YouTube trends...');
-  try {
-    const res = await fetch('https://trends.google.com/trends/api/dailytrends?geo=US');
-    const txt = await res.text();
-    const json = JSON.parse(txt.replace(")]}',",''));
-    const topics = json.default.trendingSearchesDays[0].trendingSearches.map(t => t.title.query);
-    document.getElementById('trendsContainer').innerHTML = topics.map(t => '• ' + t).join('<br>');
-    log('🌐 Trends updated.');
-  } catch (err) {
-    log('❌ Failed to fetch trends: ' + err);
-  }
-}
-
-async function checkResources() {
-  log('Checking resource health...');
-  const resEl = document.getElementById('resources');
-  resEl.innerHTML = '';
-  const resources = ['freesound','replicate','tts','google-sheets'];
-  for (const r of resources) {
-    try {
-      await fetch('/.netlify/functions/' + r);
-      resEl.innerHTML += `<p><span class="status-dot green"></span>${r} OK</p>`;
-    } catch {
-      resEl.innerHTML += `<p><span class="status-dot red"></span>${r} Offline</p>`;
-    }
-  }
-  log('✅ Resource check complete.');
-}
-
-document.getElementById('refreshChannels').onclick = fetchChannels;
-document.getElementById('runAll').onclick = runAllChannels;
-document.getElementById('fetchTrends').onclick = fetchTrends;
-document.getElementById('checkResources').onclick = checkResources;
-document.getElementById('generateScript').onclick = () => log('📝 Trigger script generation (future hook)');
-document.getElementById('createVideo').onclick = () => log('🎬 Trigger video creation (future hook)');
-document.getElementById('uploadYouTube').onclick = () => log('⬆️ Uploading video to YouTube (future hook)');
-document.getElementById('optimizeAI').onclick = () => log('🤖 AI optimization in progress (future hook)');
-document.getElementById('refreshLogs').onclick = () => document.getElementById('systemLog').innerHTML='';
-document.getElementById('authYouTube').onclick = () => log('🎥 YouTube OAuth placeholder (to be added)');
-document.getElementById('openAnalytics').onclick = () => log('📊 Analytics view (coming soon)');
-
-fetchChannels();
+renderHistory();
 </script>
 </body>
 </html>
