@@ -1,4 +1,3 @@
-﻿window.MANAGER_CFG = {
+window.MANAGER_CFG = {
   SHEET_ID: "1fkNcw3Av6DYxEG57WPbw54Tl-NyJQC5BMjyafCb547k",
-  SHEET_NAME: "Videos"
 };

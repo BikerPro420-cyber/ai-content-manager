@@ -76,37 +76,37 @@ small {color:#aaa;}
 <body>
 <aside>
   <h1>Studio Manager</h1>
-  <button id="refreshChannels">🔄 Refresh Channels</button>
-  <button id="runAll">🚀 Run All Channels</button>
-  <button id="fetchTrends">🌍 Fetch Trends</button>
-  <button id="checkResources">🧩 Check Resources</button>
-  <button id="openAnalytics">📊 Show Analytics</button>
-  <button id="authYouTube">🎥 Authorize YouTube</button>
+  <button id="refreshChannels">ðŸ”„ Refresh Channels</button>
+  <button id="runAll">ðŸš€ Run All Channels</button>
+  <button id="fetchTrends">ðŸŒ Fetch Trends</button>
+  <button id="checkResources">ðŸ§© Check Resources</button>
+  <button id="openAnalytics">ðŸ“Š Show Analytics</button>
+  <button id="authYouTube">ðŸŽ¥ Authorize YouTube</button>
   <div id="channelList">Loading channels...</div>
 </aside>
 <main>
   <header>AI Content Creator Manager</header>
 
   <div class="section">
-    <h2>⚡ Quick Actions</h2>
+    <h2>âš¡ Quick Actions</h2>
     <div class="flex-row">
-      <button class="action-btn" id="generateScript">📝 Generate Script</button>
-      <button class="action-btn" id="createVideo">🎬 Create Video</button>
-      <button class="action-btn" id="uploadYouTube">⬆️ Upload to YouTube</button>
-      <button class="action-btn" id="optimizeAI">🤖 AI Optimize</button>
-      <button class="action-btn" id="refreshLogs">📜 Clear Logs</button>
+      <button class="action-btn" id="generateScript">ðŸ“ Generate Script</button>
+      <button class="action-btn" id="createVideo">ðŸŽ¬ Create Video</button>
+      <button class="action-btn" id="uploadYouTube">â¬†ï¸ Upload to YouTube</button>
+      <button class="action-btn" id="optimizeAI">ðŸ¤– AI Optimize</button>
+      <button class="action-btn" id="refreshLogs">ðŸ“œ Clear Logs</button>
     </div>
   </div>
 
   <div class="section" id="analyticsSection">
-    <h2>📊 Channel Analytics</h2>
+    <h2>ðŸ“Š Channel Analytics</h2>
     <div class="card-grid" id="analyticsGrid">
       <div class="card"><h3>Horror Factory</h3><div class="metric">98% Success</div><small>Last 24h</small></div>
     </div>
   </div>
 
   <div class="section">
-    <h2>🧠 Resource Monitor</h2>
+    <h2>ðŸ§  Resource Monitor</h2>
     <div id="resources">
       <p><span class="status-dot green"></span>Freesound API</p>
       <p><span class="status-dot green"></span>Replicate API</p>
@@ -116,12 +116,12 @@ small {color:#aaa;}
   </div>
 
   <div class="section" id="trendsSection">
-    <h2>🔥 Global & YouTube Trends</h2>
-    <div id="trendsContainer">Press “Fetch Trends” to load global data.</div>
+    <h2>ðŸ”¥ Global & YouTube Trends</h2>
+    <div id="trendsContainer">Press â€œFetch Trendsâ€ to load global data.</div>
   </div>
 
   <div class="section">
-    <h2>📜 System Log</h2>
+    <h2>ðŸ“œ System Log</h2>
     <div id="systemLog" class="log"></div>
   </div>
 </main>
@@ -147,29 +147,29 @@ async function fetchChannels() {
       div.innerHTML = '<span>' + ch.channel + '</span><br>' + ch.genre + ' | ' + (ch.status || 'Active');
       list.appendChild(div);
     });
-    log('✅ Channels loaded: ' + data.length);
+    log('âœ… Channels loaded: ' + data.length);
   } catch (err) {
-    log('❌ Failed to load channels: ' + err);
+    log('âŒ Failed to load channels: ' + err);
   }
 }
 
 async function runAllChannels() {
-  log('🚀 Running all channels...');
+  log('ðŸš€ Running all channels...');
   try {
     const res = await fetch('/.netlify/functions/google-sheets');
     const channels = await res.json();
     for (const ch of channels) {
-      log('🎬 Generating for ' + ch.channel + '...');
+      log('ðŸŽ¬ Generating for ' + ch.channel + '...');
       await fetch('/.netlify/functions/create-video-real', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify(ch)
       });
-      log('✅ Completed ' + ch.channel);
+      log('âœ… Completed ' + ch.channel);
     }
-    log('🏁 All channels finished.');
+    log('ðŸ All channels finished.');
   } catch (err) {
-    log('❌ Error running channels: ' + err);
+    log('âŒ Error running channels: ' + err);
   }
 }
 
@@ -180,10 +180,10 @@ async function fetchTrends() {
     const txt = await res.text();
     const json = JSON.parse(txt.replace(")]}',",''));
     const topics = json.default.trendingSearchesDays[0].trendingSearches.map(t => t.title.query);
-    document.getElementById('trendsContainer').innerHTML = topics.map(t => '• ' + t).join('<br>');
-    log('🌐 Trends updated.');
+    document.getElementById('trendsContainer').innerHTML = topics.map(t => 'â€¢ ' + t).join('<br>');
+    log('ðŸŒ Trends updated.');
   } catch (err) {
-    log('❌ Failed to fetch trends: ' + err);
+    log('âŒ Failed to fetch trends: ' + err);
   }
 }
 
@@ -200,22 +200,25 @@ async function checkResources() {
       resEl.innerHTML += `<p><span class="status-dot red"></span>${r} Offline</p>`;
     }
   }
-  log('✅ Resource check complete.');
+  log('âœ… Resource check complete.');
 }
 
 document.getElementById('refreshChannels').onclick = fetchChannels;
 document.getElementById('runAll').onclick = runAllChannels;
 document.getElementById('fetchTrends').onclick = fetchTrends;
 document.getElementById('checkResources').onclick = checkResources;
-document.getElementById('generateScript').onclick = () => log('📝 Trigger script generation (future hook)');
-document.getElementById('createVideo').onclick = () => log('🎬 Trigger video creation (future hook)');
-document.getElementById('uploadYouTube').onclick = () => log('⬆️ Uploading video to YouTube (future hook)');
-document.getElementById('optimizeAI').onclick = () => log('🤖 AI optimization in progress (future hook)');
+document.getElementById('generateScript').onclick = () => log('ðŸ“ Trigger script generation (future hook)');
+document.getElementById('createVideo').onclick = () => log('ðŸŽ¬ Trigger video creation (future hook)');
+document.getElementById('uploadYouTube').onclick = () => log('â¬†ï¸ Uploading video to YouTube (future hook)');
+document.getElementById('optimizeAI').onclick = () => log('ðŸ¤– AI optimization in progress (future hook)');
 document.getElementById('refreshLogs').onclick = () => document.getElementById('systemLog').innerHTML='';
-document.getElementById('authYouTube').onclick = () => log('🎥 YouTube OAuth placeholder (to be added)');
-document.getElementById('openAnalytics').onclick = () => log('📊 Analytics view (coming soon)');
+document.getElementById('authYouTube').onclick = () => log('ðŸŽ¥ YouTube OAuth placeholder (to be added)');
+document.getElementById('openAnalytics').onclick = () => log('ðŸ“Š Analytics view (coming soon)');
 
 fetchChannels();
 </script>
+  
+  <script src="manager-config.js"></script>
+  <script src="manager-patch.js"></script>
 </body>
 </html>

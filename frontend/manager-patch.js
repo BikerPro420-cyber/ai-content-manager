@@ -1,12 +1,16 @@
-﻿(function(){
+(function(){
+  const log = (m)=>{ try{
+    const el = document.getElementById("systemLog");
+    if (el) { el.innerHTML += "[" + new Date().toLocaleTimeString() + "] " + m + "<br>"; el.scrollTop = el.scrollHeight; }
+    else console.log(m);
+  }catch(e){} };
+
   window.fetchChannels = async function(){
     log("Fetching channels from Google Sheets (POST)...");
     const payload = {
       action: "listChannels",
-      sheetId:  (window.MANAGER_CFG && MANAGER_CFG.SHEET_ID)  || "",
-      sheetName:(window.MANAGER_CFG && MANAGER_CFG.SHEET_NAME)|| "Videos"
+      sheetId: (window.MANAGER_CFG && window.MANAGER_CFG.SHEET_ID) || ""
     };
-
     try {
       const res = await fetch("/.netlify/functions/google-sheets", {
         method: "POST",
@@ -17,15 +21,16 @@
       const data = await res.json();
 
       const list = document.getElementById("channelList");
-      list.innerHTML = "";
+      if (list) list.innerHTML = "";
+
       data.forEach(ch => {
         const div = document.createElement("div");
         div.className = "channel";
-        const name = ch.channel || ch.Channel || ch.name || "Unnamed";
-        const genre = ch.genre || ch.Genre || "";
-        const status = ch.status || ch.Status || "Active";
+        const name   = ch.channel || ch.Channel || ch.name || ch.Name || "Unnamed";
+        const genre  = ch.genre   || ch.Genre   || "";
+        const status = ch.status  || ch.Status  || "Active";
         div.innerHTML = `<span>${name}</span><br>${genre} | ${status}`;
-        list.appendChild(div);
+        if (list) list.appendChild(div);
       });
 
       log("✅ Channels loaded: " + data.length);
@@ -34,7 +39,6 @@
     }
   };
 
-  // Reasignar botón por si el script original se evaluó antes
   const btn = document.getElementById("refreshChannels");
   if (btn) btn.onclick = window.fetchChannels;
 })();
