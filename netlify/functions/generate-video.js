@@ -1,4 +1,4 @@
-﻿// netlify/functions/generate-video.js
+// netlify/functions/generate-video.js
 // Node 18+ has global fetch; you don't need node-fetch. Remove it to avoid bundler headaches.
 
 // Helper: pick the right base URL whether on prod, preview, or local dev (netlify dev)
